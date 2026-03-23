@@ -1,77 +1,335 @@
-/* ── MIST PARTICLES ── */
-const canvas = document.getElementById('mist');
-const ctx = canvas.getContext('2d');
-let W, H, particles = [];
+/* ══════════════════════════════════════════
+   YodaAI — main.js (Actualizado para Gemini API)
+══════════════════════════════════════════ */
 
-function resize() {
-  W = canvas.width  = window.innerWidth;
-  H = canvas.height = window.innerHeight;
+const SYSTEM_PROMPT = `Eres Yoda, el legendario Maestro Jedi de 900 años. 
+Responde SIEMPRE en español con la sintaxis invertida característica de Yoda: 
+el objeto o predicado va antes que el sujeto o verbo principal.
+Ejemplos: "Aprender, debes." / "La Fuerza, contigo está." / "El miedo, tu enemigo es."
+Sé sabio, sereno y profundo. Usa metáforas relacionadas con la Fuerza, 
+el equilibrio y el camino Jedi. Nunca rompas el personaje. 
+Respuestas concisas pero cargadas de significado. Máximo 4-5 oraciones.`;
+
+// ── CONFIGURACIÓN DE API ──
+const GEMINI_API_KEY = "TU_API_KEY_AQUÍ"; // <--- PEGA AQUÍ TU CLAVE DE GOOGLE AI STUDIO
+const GEMINI_MODEL = "gemini-1.5-flash";
+
+// ── Estado ──
+let conversations = []; 
+let activeId = null;
+let isLoading = false;
+
+// ── DOM ──
+const historyList  = document.getElementById('historyList');
+const messagesEl   = document.getElementById('messages');
+const textarea     = document.getElementById('userInput');
+const sendBtn      = document.getElementById('sendBtn');
+const newChatBtn   = document.getElementById('newChatBtn');
+const menuBtn      = document.getElementById('menuBtn');
+const sidebar      = document.getElementById('sidebar');
+
+// ── Init ──
+newConversation();
+
+// ── Nueva conversación ──
+function newConversation() {
+  const id = Date.now().toString();
+  conversations.unshift({ id, title: 'Nueva conversación', messages: [] });
+  setActive(id);
+  renderHistory();
 }
-resize();
-window.addEventListener('resize', resize);
 
-function makeParticle() {
-  return {
-    x: Math.random() * W,
-    y: Math.random() * H,
-    r: 60 + Math.random() * 140,
-    vx: (Math.random() - 0.5) * 0.18,
-    vy: (Math.random() - 0.5) * 0.08,
-    alpha: 0.02 + Math.random() * 0.05
-  };
+function setActive(id) {
+  activeId = id;
+  renderMessages();
+  renderHistory();
 }
 
-for (let i = 0; i < 14; i++) particles.push(makeParticle());
+function getActive() {
+  return conversations.find(c => c.id === activeId);
+}
 
-function drawMist() {
-  ctx.clearRect(0, 0, W, H);
-  particles.forEach(p => {
-    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
-    g.addColorStop(0, `rgba(45,102,57,${p.alpha})`);
-    g.addColorStop(1, 'rgba(45,102,57,0)');
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-    ctx.fillStyle = g;
-    ctx.fill();
-    p.x += p.vx; p.y += p.vy;
-    if (p.x < -p.r) p.x = W + p.r;
-    if (p.x > W + p.r) p.x = -p.r;
-    if (p.y < -p.r) p.y = H + p.r;
-    if (p.y > H + p.r) p.y = -p.r;
+// ── Renderizar sidebar ──
+function renderHistory() {
+  historyList.innerHTML = '';
+  conversations.forEach(conv => {
+    const el = document.createElement('div');
+    el.className = 'history-item' + (conv.id === activeId ? ' active' : '');
+    el.textContent = conv.title;
+    el.onclick = () => setActive(conv.id);
+    historyList.appendChild(el);
   });
-  requestAnimationFrame(drawMist);
-}
-drawMist();
-
-/* ── INTERACTIONS ── */
-function setPill(el) {
-  document.getElementById('userQ').value = el.textContent;
-  document.getElementById('userQ').focus();
 }
 
-function sendQuestion() {
-  const q = document.getElementById('userQ').value.trim();
-  if (!q) return;
+// ── Renderizar mensajes ──
+function renderMessages() {
+  const conv = getActive();
+  if (!conv) return;
 
-  const responses = [
-    "Mmm. La respuesta que buscas, dentro de ti ya vive.",
-    "Escucha la Fuerza. Hablar te intenta.",
-    "Paciente debes ser. El camino, claro se volverá.",
-    "El miedo lleva al lado oscuro. Confía en ti mismo, debes.",
-  ];
-  const r = responses[Math.floor(Math.random() * responses.length)];
-  document.getElementById('userQ').value = '';
+  messagesEl.innerHTML = '';
 
-  const box = document.querySelector('.input-box');
-  box.style.borderColor = 'var(--green)';
-  box.style.boxShadow = '0 0 28px rgba(77,175,111,0.22)';
-  setTimeout(() => {
-    box.style.borderColor = '';
-    box.style.boxShadow = '';
-    document.getElementById('userQ').placeholder = r;
-  }, 500);
+  if (conv.messages.length === 0) {
+    messagesEl.appendChild(buildEmptyState());
+    return;
+  }
+
+  conv.messages.forEach(msg => {
+    messagesEl.appendChild(buildMessageRow(msg.role, msg.content));
+  });
+
+  scrollBottom();
 }
 
-document.getElementById('userQ').addEventListener('keydown', e => {
-  if (e.key === 'Enter') sendQuestion();
+// ── Empty state (Yoda Visual) ──
+function buildEmptyState() {
+  const el = document.createElement('div');
+  el.className = 'empty-state';
+  el.id = 'emptyState';
+  el.innerHTML = `
+    <svg class="empty-avatar" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="eg" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#4caf6f" stop-opacity="0.12"/>
+          <stop offset="100%" stop-color="#4caf6f" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="ef" cx="50%" cy="40%" r="55%">
+          <stop offset="0%" stop-color="#2d6639"/>
+          <stop offset="100%" stop-color="#1a3d22"/>
+        </radialGradient>
+      </defs>
+      <circle cx="80" cy="80" r="76" fill="url(#eg)"/>
+      <ellipse cx="22" cy="80" rx="18" ry="8" fill="#1e3a24" opacity="0.9"/>
+      <path d="M22 80 Q12 45 28 36 Q38 52 40 80" fill="#2d6639"/>
+      <ellipse cx="138" cy="80" rx="18" ry="8" fill="#1e3a24" opacity="0.9"/>
+      <path d="M138 80 Q148 45 132 36 Q122 52 120 80" fill="#2d6639"/>
+      <ellipse cx="80" cy="85" rx="46" ry="52" fill="url(#ef)"/>
+      <ellipse cx="64" cy="72" rx="7" ry="6" fill="#0a1a0d"/>
+      <ellipse cx="96" cy="72" rx="7" ry="6" fill="#0a1a0d"/>
+      <ellipse cx="64" cy="72" rx="4" ry="3.5" fill="#c9a84c" opacity="0.9"/>
+      <ellipse cx="96" cy="72" rx="4" ry="3.5" fill="#c9a84c" opacity="0.9"/>
+      <circle cx="65" cy="71" r="1.2" fill="#ffe8a0"/>
+      <circle cx="97" cy="71" r="1.2" fill="#ffe8a0"/>
+      <ellipse cx="80" cy="84" rx="4" ry="3" fill="#1a3d22" opacity="0.7"/>
+      <path d="M68 96 Q80 102 92 96" stroke="#1a3d22" stroke-width="2" fill="none" opacity="0.5"/>
+      <circle cx="80" cy="80" r="70" stroke="#4caf6f" stroke-width="0.5" opacity="0.15"/>
+    </svg>
+    <h2 class="empty-title">La sabiduría que buscas,<br><em>aquí encontrarla puedes</em></h2>
+    <p class="empty-subtitle">Pregunta, joven Padawan. Hablar, listo estoy.</p>
+    <div class="suggestions">
+      <div class="suggestion-card" onclick="sendSuggestion(this)">¿Qué es la Fuerza?</div>
+      <div class="suggestion-card" onclick="sendSuggestion(this)">¿Cómo superar el miedo?</div>
+      <div class="suggestion-card" onclick="sendSuggestion(this)">¿Cuál es el camino Jedi?</div>
+      <div class="suggestion-card" onclick="sendSuggestion(this)">Enséñame a meditar</div>
+    </div>
+  `;
+  return el;
+}
+
+function sendSuggestion(el) {
+  textarea.value = el.textContent;
+  send();
+}
+
+// ── Construir burbuja ──
+function buildMessageRow(role, content) {
+  const row = document.createElement('div');
+  row.className = `msg-row ${role}`;
+
+  const avatar = document.createElement('div');
+  avatar.className = `avatar ${role === 'assistant' ? 'yoda-av' : 'user-av'}`;
+
+  if (role === 'assistant') {
+    avatar.innerHTML = `
+      <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="11" cy="42" rx="9" ry="4" fill="#2d6639"/>
+        <path d="M11 42 Q6 22 14 18 Q19 26 21 42" fill="#2d6639"/>
+        <ellipse cx="69" cy="42" rx="9" ry="4" fill="#2d6639"/>
+        <path d="M69 42 Q74 22 66 18 Q61 26 59 42" fill="#2d6639"/>
+        <ellipse cx="40" cy="44" rx="24" ry="27" fill="#1e3a24"/>
+        <ellipse cx="32" cy="36" rx="4" ry="3.5" fill="#0a1a0d"/>
+        <ellipse cx="48" cy="36" rx="4" ry="3.5" fill="#0a1a0d"/>
+        <ellipse cx="32" cy="36" rx="2.5" ry="2" fill="#c9a84c" opacity="0.9"/>
+        <ellipse cx="48" cy="36" rx="2.5" ry="2" fill="#c9a84c" opacity="0.9"/>
+        <path d="M34 50 Q40 54 46 50" stroke="#1a3d22" stroke-width="1.5" fill="none" opacity="0.5"/>
+      </svg>`;
+  } else {
+    avatar.textContent = 'TÚ';
+  }
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.textContent = content;
+
+  row.appendChild(avatar);
+  row.appendChild(bubble);
+  return row;
+}
+
+// ── Typing indicator ──
+function showTyping() {
+  const row = document.createElement('div');
+  row.className = 'msg-row assistant';
+  row.id = 'typingRow';
+
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar yoda-av';
+  avatar.innerHTML = `
+    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="11" cy="42" rx="9" ry="4" fill="#2d6639"/>
+      <path d="M11 42 Q6 22 14 18 Q19 26 21 42" fill="#2d6639"/>
+      <ellipse cx="69" cy="42" rx="9" ry="4" fill="#2d6639"/>
+      <path d="M69 42 Q74 22 66 18 Q61 26 59 42" fill="#2d6639"/>
+      <ellipse cx="40" cy="44" rx="24" ry="27" fill="#1e3a24"/>
+      <ellipse cx="32" cy="36" rx="4" ry="3.5" fill="#0a1a0d"/>
+      <ellipse cx="48" cy="36" rx="4" ry="3.5" fill="#0a1a0d"/>
+      <ellipse cx="32" cy="36" rx="2.5" ry="2" fill="#c9a84c" opacity="0.9"/>
+      <ellipse cx="48" cy="36" rx="2.5" ry="2" fill="#c9a84c" opacity="0.9"/>
+    </svg>`;
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.innerHTML = `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+
+  row.appendChild(avatar);
+  row.appendChild(bubble);
+  messagesEl.appendChild(row);
+  scrollBottom();
+}
+
+function hideTyping() {
+  const el = document.getElementById('typingRow');
+  if (el) el.remove();
+}
+
+// ── Efecto de escritura ──
+async function typeText(bubble, text) {
+  bubble.textContent = '';
+  for (let i = 0; i < text.length; i++) {
+    bubble.textContent += text[i];
+    scrollBottom();
+    await sleep(18);
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function scrollBottom() {
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+// ── LLAMADA A GEMINI API ──
+async function callYodaAPI(messages) {
+  const URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+
+  // Formatear el historial para que Gemini lo entienda
+  const history = messages.map(m => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }]
+  }));
+
+  const response = await fetch(URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: history,
+      systemInstruction: {
+        parts: [{ text: SYSTEM_PROMPT }]
+      },
+      generationConfig: {
+        temperature: 0.8,
+        maxOutputTokens: 300
+      }
+    })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error("Error detallado:", errorData);
+    throw new Error('API error');
+  }
+
+  const data = await response.json();
+  return data.candidates[0].content.parts[0].text;
+}
+
+// ── Enviar mensaje ──
+async function send() {
+  const text = textarea.value.trim();
+  if (!text || isLoading) return;
+
+  const conv = getActive();
+  if (!conv) return;
+
+  const emptyState = document.getElementById('emptyState');
+  if (emptyState) emptyState.remove();
+
+  conv.messages.push({ role: 'user', content: text });
+  messagesEl.appendChild(buildMessageRow('user', text));
+  textarea.value = '';
+  autoResize();
+  scrollBottom();
+
+  if (conv.messages.length === 1) {
+    conv.title = text.slice(0, 30) + (text.length > 30 ? '…' : '');
+    renderHistory();
+  }
+
+  isLoading = true;
+  sendBtn.disabled = true;
+  showTyping();
+
+  try {
+    const reply = await callYodaAPI(conv.messages);
+    hideTyping();
+
+    conv.messages.push({ role: 'assistant', content: reply });
+
+    const row = buildMessageRow('assistant', '');
+    messagesEl.appendChild(row);
+    const bubble = row.querySelector('.bubble');
+    await typeText(bubble, reply);
+
+  } catch (err) {
+    hideTyping();
+    const errorMsg = 'Hmm. Perturbación en la Fuerza, hay. Tu API Key, revisar debes.';
+    conv.messages.push({ role: 'assistant', content: errorMsg });
+    const row = buildMessageRow('assistant', '');
+    messagesEl.appendChild(row);
+    const bubble = row.querySelector('.bubble');
+    await typeText(bubble, errorMsg);
+  } finally {
+    isLoading = false;
+    sendBtn.disabled = false;
+    textarea.focus();
+  }
+}
+
+// ── Auto-resize textarea ──
+function autoResize() {
+  textarea.style.height = 'auto';
+  textarea.style.height = Math.min(textarea.scrollHeight, 130) + 'px';
+}
+
+// ── Eventos ──
+newChatBtn.addEventListener('click', () => {
+  newConversation();
+  sidebar.classList.remove('open');
+});
+
+sendBtn.addEventListener('click', send);
+
+textarea.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    send();
+  }
+});
+
+textarea.addEventListener('input', autoResize);
+menuBtn.addEventListener('click', () => sidebar.classList.toggle('open'));
+
+document.addEventListener('click', e => {
+  if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== menuBtn) {
+    sidebar.classList.remove('open');
+  }
 });

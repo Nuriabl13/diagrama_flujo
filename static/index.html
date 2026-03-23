@@ -1,22 +1,20 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>YodaAI — La Fuerza, guiarte puede</title>
+  <title>YodaAI — Chatbot</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="./css/styles.css"/>
 </head>
 <body>
 
-<canvas id="mist"></canvas>
+<div class="app">
 
-<div class="page">
-
-  <!-- HEADER -->
-  <header>
-    <div class="logo">
-      <div class="ears">
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-ears">
         <svg viewBox="0 0 80 50" fill="none" xmlns="http://www.w3.org/2000/svg">
           <ellipse cx="14" cy="32" rx="13" ry="7" fill="#2d6639" opacity="0.9"/>
           <path d="M14 32 Q8 10 18 6 Q24 14 27 32" fill="#2d6639" opacity="0.9"/>
@@ -25,116 +23,58 @@
           <ellipse cx="40" cy="36" rx="20" ry="13" fill="#1e3a24"/>
         </svg>
       </div>
-      <div class="logo-text">YODA<span>AI</span></div>
+      <div class="logo-name">YODA<span>AI</span></div>
     </div>
-    <nav>
-      <a>La Fuerza</a>
-      <a>Sabiduría</a>
-      <a>Entrenamiento</a>
-      <a>Iniciar</a>
-    </nav>
-  </header>
 
-  <!-- HERO -->
-  <main class="hero">
+    <button class="new-chat-btn" id="newChatBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+      Nueva conversación
+    </button>
 
-    <!-- Yoda face silhouette -->
-    <svg class="yoda-silhouette" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#4caf6f" stop-opacity="0.15"/>
-          <stop offset="100%" stop-color="#4caf6f" stop-opacity="0"/>
-        </radialGradient>
-        <radialGradient id="faceGrad" cx="50%" cy="40%" r="55%">
-          <stop offset="0%" stop-color="#2d6639"/>
-          <stop offset="100%" stop-color="#1a3d22"/>
-        </radialGradient>
-      </defs>
-      <circle cx="80" cy="80" r="78" fill="url(#glow)"/>
-      <!-- Ears -->
-      <ellipse cx="22" cy="80" rx="18" ry="8" fill="#1e3a24" opacity="0.9"/>
-      <path d="M22 80 Q12 45 28 36 Q38 52 40 80" fill="#2d6639"/>
-      <ellipse cx="138" cy="80" rx="18" ry="8" fill="#1e3a24" opacity="0.9"/>
-      <path d="M138 80 Q148 45 132 36 Q122 52 120 80" fill="#2d6639"/>
-      <!-- Head -->
-      <ellipse cx="80" cy="85" rx="46" ry="52" fill="url(#faceGrad)"/>
-      <!-- Eyes -->
-      <ellipse cx="64" cy="72" rx="7" ry="6" fill="#0a1a0d"/>
-      <ellipse cx="96" cy="72" rx="7" ry="6" fill="#0a1a0d"/>
-      <ellipse cx="64" cy="72" rx="4" ry="3.5" fill="#c9a84c" opacity="0.9"/>
-      <ellipse cx="96" cy="72" rx="4" ry="3.5" fill="#c9a84c" opacity="0.9"/>
-      <circle cx="65" cy="71" r="1.2" fill="#ffe8a0"/>
-      <circle cx="97" cy="71" r="1.2" fill="#ffe8a0"/>
-      <!-- Nose -->
-      <ellipse cx="80" cy="84" rx="4" ry="3" fill="#1a3d22" opacity="0.7"/>
-      <!-- Mouth wrinkle -->
-      <path d="M68 96 Q80 102 92 96" stroke="#1a3d22" stroke-width="2" fill="none" opacity="0.6"/>
-      <!-- Wrinkles -->
-      <path d="M50 68 Q58 65 64 68" stroke="#1a3d22" stroke-width="1.5" fill="none" opacity="0.5"/>
-      <path d="M96 68 Q102 65 110 68" stroke="#1a3d22" stroke-width="1.5" fill="none" opacity="0.5"/>
-      <!-- Glow ring -->
-      <circle cx="80" cy="80" r="72" stroke="#4caf6f" stroke-width="0.5" opacity="0.2"/>
-    </svg>
+    <p class="history-label">Conversaciones</p>
+    <div class="history-list" id="historyList"></div>
 
-    <p class="tagline-small">Inteligencia Artificial · Inspirada en la Fuerza</p>
+    <div class="sidebar-footer">
+      <div class="force-dot"></div>
+      Dagobah Build v1.0
+    </div>
+  </aside>
 
-    <h1>La sabiduría que buscas,<br><em>aquí encontrarla puedes</em></h1>
+  <!-- ══ MAIN ══ -->
+  <div class="main">
 
-    <p class="subtitle">
-      Aprende, cuestiona, reflexiona. Como el Gran Maestro,<br>
-      respuestas simples a preguntas profundas, darte puedo.
-    </p>
+    <div class="topbar">
+      <button class="menu-btn" id="menuBtn" aria-label="Menú">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M3 12h18M3 6h18M3 18h18"/>
+        </svg>
+      </button>
+      <span class="topbar-title">Maestro Yoda · IA</span>
+    </div>
 
-    <div class="input-wrap">
+    <div class="messages" id="messages"></div>
+
+    <div class="input-area">
       <div class="input-box">
-        <input type="text" placeholder="Pregunta, joven Padawan…" id="userQ"/>
-        <button class="send-btn" onclick="sendQuestion()">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <textarea
+          id="userInput"
+          rows="1"
+          placeholder="Pregunta, joven Padawan…"
+        ></textarea>
+        <button class="send-btn" id="sendBtn" aria-label="Enviar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/>
           </svg>
         </button>
       </div>
+      <p class="input-hint">La Fuerza, guiarte puede · Enter para enviar</p>
     </div>
 
-    <div class="pills">
-      <div class="pill" onclick="setPill(this)">¿Qué es la Fuerza?</div>
-      <div class="pill" onclick="setPill(this)">Enséñame el camino</div>
-      <div class="pill" onclick="setPill(this)">¿Cómo vencer el miedo?</div>
-      <div class="pill" onclick="setPill(this)">Meditación Jedi</div>
-    </div>
-
-    <div class="divider"></div>
-  </main>
-
-  <!-- FEATURES -->
-  <section class="features">
-    <div class="feat">
-      <div class="feat-icon">🌿</div>
-      <h3>Sabiduría Ancestral</h3>
-      <p>900 años de conocimiento condensados. Respuestas pausadas, claras y llenas de intención.</p>
-    </div>
-    <div class="feat">
-      <div class="feat-icon">⚡</div>
-      <h3>La Fuerza, contigo</h3>
-      <p>Guía contextual, reflexiva. El camino correcto, mostrar puedo. Decidir, solo tú debes.</p>
-    </div>
-    <div class="feat">
-      <div class="feat-icon">🔮</div>
-      <h3>Visión Profunda</h3>
-      <p>Más allá de lo evidente, ver puede. Conexiones que otros ignoran, aquí revelarlas puedo.</p>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer>
-    <span>© 2025 YodaAI · Que la Fuerza te acompañe</span>
-    <div class="force-dot"></div>
-    <span>Versión 1.0 · Dagobah Build</span>
-  </footer>
-
+  </div>
 </div>
 
 <script src="./js/main.js"></script>
-
 </body>
 </html>
