@@ -1,32 +1,20 @@
 /* ══════════════════════════════════════════
-   YodaAI — main.js (Actualizado para Gemini API)
+   YodaAI — main.js (Conectado al backend Rust)
 ══════════════════════════════════════════ */
 
-const SYSTEM_PROMPT = `Eres Yoda, el legendario Maestro Jedi de 900 años. 
-Responde SIEMPRE en español con la sintaxis invertida característica de Yoda: 
-el objeto o predicado va antes que el sujeto o verbo principal.
-Ejemplos: "Aprender, debes." / "La Fuerza, contigo está." / "El miedo, tu enemigo es."
-Sé sabio, sereno y profundo. Usa metáforas relacionadas con la Fuerza, 
-el equilibrio y el camino Jedi. Nunca rompas el personaje. 
-Respuestas concisas pero cargadas de significado. Máximo 4-5 oraciones.`;
-
-// ── CONFIGURACIÓN DE API ──
-const GEMINI_API_KEY = "TU_API_KEY_AQUÍ"; // <--- PEGA AQUÍ TU CLAVE DE GOOGLE AI STUDIO
-const GEMINI_MODEL = "gemini-1.5-flash";
-
 // ── Estado ──
-let conversations = []; 
+let conversations = [];
 let activeId = null;
 let isLoading = false;
 
 // ── DOM ──
-const historyList  = document.getElementById('historyList');
-const messagesEl   = document.getElementById('messages');
-const textarea     = document.getElementById('userInput');
-const sendBtn      = document.getElementById('sendBtn');
-const newChatBtn   = document.getElementById('newChatBtn');
-const menuBtn      = document.getElementById('menuBtn');
-const sidebar      = document.getElementById('sidebar');
+const historyList = document.getElementById("historyList");
+const messagesEl = document.getElementById("messages");
+const textarea = document.getElementById("userInput");
+const sendBtn = document.getElementById("sendBtn");
+const newChatBtn = document.getElementById("newChatBtn");
+const menuBtn = document.getElementById("menuBtn");
+const sidebar = document.getElementById("sidebar");
 
 // ── Init ──
 newConversation();
@@ -34,7 +22,7 @@ newConversation();
 // ── Nueva conversación ──
 function newConversation() {
   const id = Date.now().toString();
-  conversations.unshift({ id, title: 'Nueva conversación', messages: [] });
+  conversations.unshift({ id, title: "Nueva conversación", messages: [] });
   setActive(id);
   renderHistory();
 }
@@ -46,15 +34,15 @@ function setActive(id) {
 }
 
 function getActive() {
-  return conversations.find(c => c.id === activeId);
+  return conversations.find((c) => c.id === activeId);
 }
 
 // ── Renderizar sidebar ──
 function renderHistory() {
-  historyList.innerHTML = '';
-  conversations.forEach(conv => {
-    const el = document.createElement('div');
-    el.className = 'history-item' + (conv.id === activeId ? ' active' : '');
+  historyList.innerHTML = "";
+  conversations.forEach((conv) => {
+    const el = document.createElement("div");
+    el.className = "history-item" + (conv.id === activeId ? " active" : "");
     el.textContent = conv.title;
     el.onclick = () => setActive(conv.id);
     historyList.appendChild(el);
@@ -66,25 +54,25 @@ function renderMessages() {
   const conv = getActive();
   if (!conv) return;
 
-  messagesEl.innerHTML = '';
+  messagesEl.innerHTML = "";
 
   if (conv.messages.length === 0) {
     messagesEl.appendChild(buildEmptyState());
     return;
   }
 
-  conv.messages.forEach(msg => {
+  conv.messages.forEach((msg) => {
     messagesEl.appendChild(buildMessageRow(msg.role, msg.content));
   });
 
   scrollBottom();
 }
 
-// ── Empty state (Yoda Visual) ──
+// ── Empty state ──
 function buildEmptyState() {
-  const el = document.createElement('div');
-  el.className = 'empty-state';
-  el.id = 'emptyState';
+  const el = document.createElement("div");
+  el.className = "empty-state";
+  el.id = "emptyState";
   el.innerHTML = `
     <svg class="empty-avatar" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -132,13 +120,13 @@ function sendSuggestion(el) {
 
 // ── Construir burbuja ──
 function buildMessageRow(role, content) {
-  const row = document.createElement('div');
+  const row = document.createElement("div");
   row.className = `msg-row ${role}`;
 
-  const avatar = document.createElement('div');
-  avatar.className = `avatar ${role === 'assistant' ? 'yoda-av' : 'user-av'}`;
+  const avatar = document.createElement("div");
+  avatar.className = `avatar ${role === "assistant" ? "yoda-av" : "user-av"}`;
 
-  if (role === 'assistant') {
+  if (role === "assistant") {
     avatar.innerHTML = `
       <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
         <ellipse cx="11" cy="42" rx="9" ry="4" fill="#2d6639"/>
@@ -153,11 +141,11 @@ function buildMessageRow(role, content) {
         <path d="M34 50 Q40 54 46 50" stroke="#1a3d22" stroke-width="1.5" fill="none" opacity="0.5"/>
       </svg>`;
   } else {
-    avatar.textContent = 'TÚ';
+    avatar.textContent = "TÚ";
   }
 
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble';
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
   bubble.textContent = content;
 
   row.appendChild(avatar);
@@ -167,12 +155,12 @@ function buildMessageRow(role, content) {
 
 // ── Typing indicator ──
 function showTyping() {
-  const row = document.createElement('div');
-  row.className = 'msg-row assistant';
-  row.id = 'typingRow';
+  const row = document.createElement("div");
+  row.className = "msg-row assistant";
+  row.id = "typingRow";
 
-  const avatar = document.createElement('div');
-  avatar.className = 'avatar yoda-av';
+  const avatar = document.createElement("div");
+  avatar.className = "avatar yoda-av";
   avatar.innerHTML = `
     <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
       <ellipse cx="11" cy="42" rx="9" ry="4" fill="#2d6639"/>
@@ -186,8 +174,8 @@ function showTyping() {
       <ellipse cx="48" cy="36" rx="2.5" ry="2" fill="#c9a84c" opacity="0.9"/>
     </svg>`;
 
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble';
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
   bubble.innerHTML = `<div class="typing-dots"><span></span><span></span><span></span></div>`;
 
   row.appendChild(avatar);
@@ -197,13 +185,13 @@ function showTyping() {
 }
 
 function hideTyping() {
-  const el = document.getElementById('typingRow');
+  const el = document.getElementById("typingRow");
   if (el) el.remove();
 }
 
 // ── Efecto de escritura ──
 async function typeText(bubble, text) {
-  bubble.textContent = '';
+  bubble.textContent = "";
   for (let i = 0; i < text.length; i++) {
     bubble.textContent += text[i];
     scrollBottom();
@@ -211,45 +199,36 @@ async function typeText(bubble, text) {
   }
 }
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 function scrollBottom() {
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-// ── LLAMADA A GEMINI API ──
+// ── LLAMADA AL BACKEND RUST (en lugar de llamar a Gemini directamente) ──
 async function callYodaAPI(messages) {
-  const URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-
-  // Formatear el historial para que Gemini lo entienda
-  const history = messages.map(m => ({
-    role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: m.content }]
+  // Convertimos el historial al formato que espera nuestro backend Rust
+  // El backend espera: { historial: [{role: "user"|"model", parts: [{text: "..."}]}] }
+  const historialGemini = messages.map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
   }));
 
-  const response = await fetch(URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: history,
-      systemInstruction: {
-        parts: [{ text: SYSTEM_PROMPT }]
-      },
-      generationConfig: {
-        temperature: 0.8,
-        maxOutputTokens: 300
-      }
-    })
+  const response = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ historial: historialGemini }),
   });
 
   if (!response.ok) {
-    const errorData = await response.json();
-    console.error("Error detallado:", errorData);
-    throw new Error('API error');
+    throw new Error("Error en el servidor: " + response.status);
   }
 
   const data = await response.json();
-  return data.candidates[0].content.parts[0].text;
+
+  // El backend devuelve: { texto: "...", categoria_detectada: "..." }
+  return data.texto;
 }
 
 // ── Enviar mensaje ──
@@ -260,17 +239,17 @@ async function send() {
   const conv = getActive();
   if (!conv) return;
 
-  const emptyState = document.getElementById('emptyState');
+  const emptyState = document.getElementById("emptyState");
   if (emptyState) emptyState.remove();
 
-  conv.messages.push({ role: 'user', content: text });
-  messagesEl.appendChild(buildMessageRow('user', text));
-  textarea.value = '';
+  conv.messages.push({ role: "user", content: text });
+  messagesEl.appendChild(buildMessageRow("user", text));
+  textarea.value = "";
   autoResize();
   scrollBottom();
 
   if (conv.messages.length === 1) {
-    conv.title = text.slice(0, 30) + (text.length > 30 ? '…' : '');
+    conv.title = text.slice(0, 30) + (text.length > 30 ? "…" : "");
     renderHistory();
   }
 
@@ -282,21 +261,22 @@ async function send() {
     const reply = await callYodaAPI(conv.messages);
     hideTyping();
 
-    conv.messages.push({ role: 'assistant', content: reply });
+    conv.messages.push({ role: "assistant", content: reply });
 
-    const row = buildMessageRow('assistant', '');
+    const row = buildMessageRow("assistant", "");
     messagesEl.appendChild(row);
-    const bubble = row.querySelector('.bubble');
+    const bubble = row.querySelector(".bubble");
     await typeText(bubble, reply);
-
   } catch (err) {
     hideTyping();
-    const errorMsg = 'Hmm. Perturbación en la Fuerza, hay. Tu API Key, revisar debes.';
-    conv.messages.push({ role: 'assistant', content: errorMsg });
-    const row = buildMessageRow('assistant', '');
+    const errorMsg =
+      "Hmm. Perturbacion en la Fuerza, hay. El servidor Rust, revisar debes.";
+    conv.messages.push({ role: "assistant", content: errorMsg });
+    const row = buildMessageRow("assistant", "");
     messagesEl.appendChild(row);
-    const bubble = row.querySelector('.bubble');
+    const bubble = row.querySelector(".bubble");
     await typeText(bubble, errorMsg);
+    console.error(err);
   } finally {
     isLoading = false;
     sendBtn.disabled = false;
@@ -306,30 +286,34 @@ async function send() {
 
 // ── Auto-resize textarea ──
 function autoResize() {
-  textarea.style.height = 'auto';
-  textarea.style.height = Math.min(textarea.scrollHeight, 130) + 'px';
+  textarea.style.height = "auto";
+  textarea.style.height = Math.min(textarea.scrollHeight, 130) + "px";
 }
 
 // ── Eventos ──
-newChatBtn.addEventListener('click', () => {
+newChatBtn.addEventListener("click", () => {
   newConversation();
-  sidebar.classList.remove('open');
+  sidebar.classList.remove("open");
 });
 
-sendBtn.addEventListener('click', send);
+sendBtn.addEventListener("click", send);
 
-textarea.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) {
+textarea.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
     send();
   }
 });
 
-textarea.addEventListener('input', autoResize);
-menuBtn.addEventListener('click', () => sidebar.classList.toggle('open'));
+textarea.addEventListener("input", autoResize);
+menuBtn.addEventListener("click", () => sidebar.classList.toggle("open"));
 
-document.addEventListener('click', e => {
-  if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== menuBtn) {
-    sidebar.classList.remove('open');
+document.addEventListener("click", (e) => {
+  if (
+    sidebar.classList.contains("open") &&
+    !sidebar.contains(e.target) &&
+    e.target !== menuBtn
+  ) {
+    sidebar.classList.remove("open");
   }
 });
